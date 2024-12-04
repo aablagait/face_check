@@ -66,7 +66,7 @@ if __name__ == "__main__":
     csv_file = "embeddings.csv"  # Замените на путь к вашему файлу
 
     # Путь к папке с изображениями, которые нужно классифицировать
-    input_folder = "test_images/Kianu"  # Укажите путь к папке с входными изображениями
+    input_folder = "test_images/Tramp"  # Укажите путь к папке с входными изображениями
     # input_folder = None
     input_image_path = "test_images/DiCaprio/img_2.png"  # Укажите путь к входному изображению
 

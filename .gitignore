@@ -1,6 +1,8 @@
 .venv/
 art/
 images/
+test_images/
 types/
+.idea/
 *.csv
 results.txt
