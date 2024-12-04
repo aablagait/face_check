@@ -9,7 +9,7 @@ from constants import backends, models, alignment_modes, users
 import csv_functions as cf
 
 
-df = pd.read_csv('man.csv', delimiter=',') # загружаем .csv файл в переменную df
+df = pd.read_csv('art.csv', delimiter=',') # загружаем .csv файл в переменную df
 searcher = 'images/pas.jpg' # фотография двойника, которого надо найти
 
 cf.add_vector(df) # создание столбца 'vector', использовать только при первом включении

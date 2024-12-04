@@ -1,0 +1,6 @@
+.venv/
+art/
+images/
+types/
+*.csv
+results.txt
