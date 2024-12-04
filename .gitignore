@@ -1,6 +1,8 @@
 .venv/
 archive/
 art/
+build/
+dist/
 images/
 test_images/
 types/

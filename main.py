@@ -88,8 +88,8 @@ class ImageClassifierApp(QWidget):
         # Режим выбора
         mode_layout = QHBoxLayout()
         self.mode_group = QButtonGroup(self)
-        self.single_image_radio = QRadioButton("Single Image")
-        self.folder_radio = QRadioButton("Folder")
+        self.single_image_radio = QRadioButton("Загружить изображение")
+        self.folder_radio = QRadioButton("Папка")
         self.single_image_radio.setChecked(True)
 
         self.mode_group.addButton(self.single_image_radio)
@@ -102,7 +102,7 @@ class ImageClassifierApp(QWidget):
         layout.addLayout(mode_layout)
 
         # Кнопка выбора
-        self.select_button = QPushButton("Select Image/Folder")
+        self.select_button = QPushButton("Выбор изображения/папки")
         self.select_button.clicked.connect(self.select_input)
         layout.addWidget(self.select_button)
 
@@ -140,7 +140,7 @@ class ImageClassifierApp(QWidget):
         result = classify_image(self.embeddings, file_path)
         if result:
             best_group, scores = result
-            self.display_results(f"Image belongs to: {best_group}\nScores:\n" +
+            self.display_results(f"Изображение относится к группе: {best_group}\nРасстояние:\n" +
                                  "\n".join(f"{group}: {score:.2f}" for group, score in scores.items()))
         else:
             QMessageBox.critical(self, "Error", "Failed to classify the image.")
@@ -148,13 +148,18 @@ class ImageClassifierApp(QWidget):
     def classify_folder(self, folder_path):
         most_common_class, classifications = process_images(self.embeddings, folder_path)
         if classifications:
-            self.display_results(f"Most common type: {most_common_class}\n\nDetails:\n" +
+            self.display_results(f"Наиболее вероятный тип: {most_common_class}\n\nDetails:\n" +
                                  "\n".join(f"{idx+1}. {cls}" for idx, cls in enumerate(classifications)))
         else:
             QMessageBox.critical(self, "Error", "No images were classified successfully.")
 
     def display_image(self, file_path):
         image = Image.open(file_path)
+
+        # Если изображение в формате RGBA (с альфа-каналом), конвертируем в RGB
+        if image.mode == 'RGBA':
+            image = image.convert('RGB')
+
         image = image.resize((200, 200))
         image.save("temp_image.jpg")  # Сохраняем временное изображение для отображения
         pixmap = QPixmap("temp_image.jpg")
