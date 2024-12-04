@@ -1,18 +1,19 @@
 import os
+import csv
 from collections import Counter, defaultdict
+
 import numpy as np
 from deepface import DeepFace
-import csv
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+from PIL import Image
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QRadioButton, QFileDialog, QTextEdit, QMessageBox, QButtonGroup
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PIL import Image
+
 
 # === Основные функции программы ===
-
 def load_embeddings(csv_file):
     embeddings = defaultdict(list)
     with open(csv_file, mode='r', encoding='utf-8') as file:
@@ -70,8 +71,8 @@ def process_images(embeddings, folder_path):
         return most_common_class, classification_results
     return None, []
 
-# === Интерфейс приложения ===
 
+# === Интерфейс приложения ===
 class ImageClassifierApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -161,6 +162,7 @@ class ImageClassifierApp(QWidget):
 
     def display_results(self, text):
         self.results_text.setPlainText(text)
+
 
 # === Запуск приложения ===
 if __name__ == "__main__":

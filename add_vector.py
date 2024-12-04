@@ -1,8 +1,10 @@
 import os
 import csv
+
 import numpy as np
 from deepface import DeepFace
 from PIL import Image
+
 
 def extract_embeddings(image_path):
     try:
@@ -12,6 +14,7 @@ def extract_embeddings(image_path):
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
         return None
+
 
 def process_images_in_folders(base_folder, output_csv):
     with open(output_csv, mode='w', newline='', encoding='utf-8') as file:
@@ -30,6 +33,7 @@ def process_images_in_folders(base_folder, output_csv):
                         writer.writerow([image_path] + embedding)
                     else:
                         print(f"Skipping {image_path} due to errors.")
+
 
 if __name__ == "__main__":
     base_folder = "types"  # Замените на путь к вашей папке с фотографиями

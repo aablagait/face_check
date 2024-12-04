@@ -1,8 +1,12 @@
 .venv/
+archive/
 art/
 images/
 test_images/
 types/
 .idea/
+.DS_Store/
 *.csv
 results.txt
+*.jpg
+*.png
