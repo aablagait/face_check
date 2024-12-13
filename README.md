@@ -1,6 +1,15 @@
 # Инструкция по запуску Python-приложения на Windows
 
 ## Установка Python 3.9
+### команда для сборки приложения
+
+
+```bash
+pyinstaller --onefile --windowed --add-data "embeddings.csv:." --add-data "venv/lib/python3.9/site-packages/cv2/data/:cv2/data" --hidden-import "numpy" --hidden-import "deepface" --hidden-import "tf_keras" --hidden-import "opencv-python" main.py
+```
+
+
+
 
 1. Перейдите на официальный сайт Python: [https://www.python.org/downloads/release/python-390/](https://www.python.org/downloads/release/python-390/).
 2. Скачайте установщик **Windows installer (64-bit)** или **Windows installer (32-bit)** в зависимости от архитектуры вашей системы.

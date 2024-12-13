@@ -1,6 +1,7 @@
 .venv/
+venv/
 archive/
-art/
+archive/art/
 build/
 dist/
 images/
@@ -9,6 +10,6 @@ types/
 .idea/
 .DS_Store/
 *.csv
-results.txt
+archive/results.txt
 *.jpg
 *.png

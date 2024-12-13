@@ -1,29 +1,38 @@
 import os
+import sys
 import csv
 from collections import Counter, defaultdict
-
 import numpy as np
 from deepface import DeepFace
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PIL import Image
-from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QRadioButton, QFileDialog, QTextEdit, QMessageBox, QButtonGroup
-)
+from tkinter import Tk, Label, Button, Radiobutton, StringVar, Text, filedialog, messagebox
+from PIL import Image, ImageTk
+
+
+if getattr(sys, 'frozen', False):
+    # Если приложение запущено как исполняемый файл
+    base_path = sys._MEIPASS
+else:
+    # Если приложение запущено из исходного кода
+    base_path = os.path.dirname(__file__)
+
+embeddings_file = os.path.join(base_path, 'embeddings.csv')
 
 
 # === Основные функции программы ===
 def load_embeddings(csv_file):
     embeddings = defaultdict(list)
-    with open(csv_file, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        next(reader)
-        for row in reader:
-            file_path = row[0]
-            group = file_path.split(os.sep)[-2]
-            vector = np.array(row[1:], dtype=float)
-            embeddings[group].append(vector)
+    try:
+        with open(csv_file, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            next(reader)  # Пропускаем заголовок
+            for row in reader:
+                file_path = row[0]
+                group = file_path.split('/')[-2]
+
+                vector = np.array(row[1:], dtype=float)
+                embeddings[group].append(vector)
+    except Exception as e:
+        print(f"Error loading embeddings: {e}")
     return embeddings
 
 
@@ -73,63 +82,51 @@ def process_images(embeddings, folder_path):
 
 
 # === Интерфейс приложения ===
-class ImageClassifierApp(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Image Classifier")
-        self.setGeometry(100, 100, 800, 600)
+class ImageClassifierApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Image Classifier")
+        self.root.geometry("800x600")
 
-        self.embeddings = load_embeddings("embeddings.csv")  # Укажите путь к вашему CSV файлу
-        self.init_ui()
+        self.embeddings = load_embeddings(embeddings_file)  # Укажите путь к вашему CSV файлу
 
-    def init_ui(self):
-        layout = QVBoxLayout()
+        self.mode_var = StringVar(value="single")
 
         # Режим выбора
-        mode_layout = QHBoxLayout()
-        self.mode_group = QButtonGroup(self)
-        self.single_image_radio = QRadioButton("Загружить изображение")
-        self.folder_radio = QRadioButton("Папка")
-        self.single_image_radio.setChecked(True)
+        mode_frame = Label(root)
+        mode_frame.pack(pady=10)
 
-        self.mode_group.addButton(self.single_image_radio)
-        self.mode_group.addButton(self.folder_radio)
-
-        mode_layout.addWidget(QLabel("Mode:"))
-        mode_layout.addWidget(self.single_image_radio)
-        mode_layout.addWidget(self.folder_radio)
-
-        layout.addLayout(mode_layout)
+        Label(mode_frame, text="Mode:").pack(side='left')
+        Radiobutton(mode_frame, text="Загружать изображение", variable=self.mode_var, value="single").pack(side='left')
+        Radiobutton(mode_frame, text="Папка", variable=self.mode_var, value="folder").pack(side='left')
 
         # Кнопка выбора
-        self.select_button = QPushButton("Выбор изображения/папки")
-        self.select_button.clicked.connect(self.select_input)
-        layout.addWidget(self.select_button)
+        self.select_button = Button(root, text="Выбор изображения/папки", command=self.select_input)
+        self.select_button.pack(pady=10)
 
         # Отображение изображения
-        self.image_label = QLabel()
-        self.image_label.setFixedSize(200, 200)
-        self.image_label.setStyleSheet("border: 1px solid black;")
-        # layout.addWidget(self.image_label, alignment=1)
-        layout.addWidget(self.image_label, alignment=Qt.AlignCenter)
+        self.image_label = Label(root)
+        self.image_label.pack(pady=10)
 
         # Результаты
-        self.results_text = QTextEdit()
-        self.results_text.setReadOnly(True)
-        layout.addWidget(self.results_text)
-
-        self.setLayout(layout)
+        self.results_text = Text(root, wrap='word', height=15)
+        self.results_text.pack(pady=10)
 
     def select_input(self):
-        if self.single_image_radio.isChecked():
-            file_path, _ = QFileDialog.getOpenFileName(
-                self, "Select Image", "", "Image Files (*.png *.jpg *.jpeg)"
-            )
-            if file_path:
+        if self.mode_var.get() == "single":
+            # file_path = filedialog.askopenfilename(title="Select Image",
+            #                                        filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
+            file_path = filedialog.askopenfilename()
+            if file_path:  # Проверяем выбран ли файл
+                print(f"Selected image: {file_path}")  # Отладочное сообщение
                 self.classify_single_image(file_path)
+            else:
+                print("No image selected.")  # Отладочное сообщение
+                messagebox.showinfo("Info", "Не выбрано изображение.")  # Информируем пользователя
         else:
-            folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
+            folder_path = filedialog.askdirectory(title="Select Folder")
             if folder_path:
+                print(f"Selected folder: {folder_path}")  # Отладочное сообщение
                 self.classify_folder(folder_path)
 
     def classify_single_image(self, file_path):
@@ -138,40 +135,62 @@ class ImageClassifierApp(QWidget):
 
         # Классификация
         result = classify_image(self.embeddings, file_path)
+
         if result:
             best_group, scores = result
             self.display_results(f"Изображение относится к группе: {best_group}\nРасстояние:\n" +
                                  "\n".join(f"{group}: {score:.2f}" for group, score in scores.items()))
+            print(f"Classification result: {best_group}")  # Отладочное сообщение
         else:
-            QMessageBox.critical(self, "Error", "Failed to classify the image.")
+            messagebox.showerror("Error", "Не удалось классифицировать изображение.")
+            print("Classification failed.")  # Отладочное сообщение
 
     def classify_folder(self, folder_path):
         most_common_class, classifications = process_images(self.embeddings, folder_path)
+
         if classifications:
             self.display_results(f"Наиболее вероятный тип: {most_common_class}\n\nDetails:\n" +
-                                 "\n".join(f"{idx+1}. {cls}" for idx, cls in enumerate(classifications)))
+                                 "\n".join(f"{idx + 1}. {cls}" for idx, cls in enumerate(classifications)))
+            print(f"Folder classification result: {most_common_class}")  # Отладочное сообщение
         else:
-            QMessageBox.critical(self, "Error", "No images were classified successfully.")
+            messagebox.showerror("Error", "Не удалось классифицировать ни одно изображение.")
+            print("No images classified.")  # Отладочное сообщение
 
     def display_image(self, file_path):
-        image = Image.open(file_path)
+        try:
+            image = Image.open(file_path)
 
-        # Если изображение в формате RGBA (с альфа-каналом), конвертируем в RGB
-        if image.mode == 'RGBA':
-            image = image.convert('RGB')
+            # Если изображение в формате RGBA (с альфа-каналом), конвертируем в RGB
+            if image.mode == 'RGBA':
+                image = image.convert('RGB')
 
-        image = image.resize((200, 200))
-        image.save("temp_image.jpg")  # Сохраняем временное изображение для отображения
-        pixmap = QPixmap("temp_image.jpg")
-        self.image_label.setPixmap(pixmap)
+            image.thumbnail((200, 200))  # Изменение размера с сохранением пропорций
+
+            # Сохранение ссылки на изображение для отображения в метке
+            self.tk_image = ImageTk.PhotoImage(image)
+
+            self.image_label.config(image=self.tk_image)  # Обновление метки с изображением
+            self.image_label.image = self.tk_image  # Сохранение ссылки на изображение
+
+            print("Image displayed successfully.")  # Отладочное сообщение
+
+        except Exception as e:
+            print(f"Error displaying image: {e}")
+            messagebox.showerror("Error", "Не удалось отобразить изображение.")
 
     def display_results(self, text):
-        self.results_text.setPlainText(text)
+        self.results_text.delete(1.0, 'end')  # Очистка предыдущих результатов
+        self.results_text.insert('end', text)  # Вставка новых результатов
 
 
 # === Запуск приложения ===
 if __name__ == "__main__":
-    app = QApplication([])
-    window = ImageClassifierApp()
-    window.show()
-    app.exec_()
+    try:
+        root = Tk()
+
+        app = ImageClassifierApp(root)
+
+        root.mainloop()
+
+    except Exception as e:
+        print(f"Application error: {e}")
